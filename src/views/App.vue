@@ -1,14 +1,15 @@
 <template>
-	<main class="app" ref="appContainer">
-		<h1>The Quiz</h1>
+	<main class="app" :style="parallaxStyle" ref="appContainer">
+		<h1>Quiz</h1>
 
 		<section class="quiz" v-if="!endOfQuiz">
-			<Question
-				:question="getCurrentQuestion.question"
-				:index="getCurrentQuestion.index"></Question>
+			<div class="wrapper">
+				<Question
+					:question="getCurrentQuestion.question"
+					:index="getCurrentQuestion.index"></Question>
 
-			<Score :score="score" :totalQuestions="questions.length"></Score>
-
+				<Score :score="score" :totalQuestions="questions.length"></Score>
+			</div>
 			<Options
 				:options="getCurrentQuestion.options"
 				:selected="getCurrentQuestion.selected"
@@ -16,19 +17,23 @@
 				:questionIndex="getCurrentQuestion.index"
 				@selectOption="setAnswer"></Options>
 
-			<Button
-				@click="nextQuestion"
-				:disabled="!isAnyOptionSelected"
-				:buttonText="
-					getCurrentQuestion.index == questions.length - 1 ? 'Finish' : 'Next'
-				"></Button>
+			<Button @handleClick="nextQuestion" :disabled="!isAnyOptionSelected">
+				{{
+					getCurrentQuestion.index == questions.length - 1 ? "Finish" : "Next"
+				}}
+			</Button>
 		</section>
 
 		<section v-else class="center-content">
 			<h2>You have finished the quiz!</h2>
-			<p>Your score is {{ score }} / {{ questions.length }}</p>
-			<p>You performed better than {{ percentile }}% of all quiz-takers.</p>
-			<Button @click="resetQuiz" :buttonText='Play'></Button>
+			<p>
+				Your score is <strong>{{ score }} / {{ questions.length }}</strong>
+			</p>
+			<p>
+				You performed better than <strong>{{ percentile }}% </strong> of all
+				quiz-takers.
+			</p>
+			<Button @handleClick="resetQuiz">Play Again</Button>
 		</section>
 	</main>
 </template>
@@ -36,10 +41,10 @@
 <script>
 import { ref } from "vue";
 
-import Question from "./components/Question.vue";
-import Score from "./components/Score.vue";
-import Options from "./components/Options.vue";
-import Button from "./components/Button.vue";
+import Question from "../components/Question.vue";
+import Score from "../components/Score.vue";
+import Options from "../components/Options.vue";
+import Button from "../components/Button.vue";
 
 export default {
 	components: {
@@ -94,7 +99,9 @@ export default {
 			],
 			endOfQuiz: false,
 			currentQuestion: 0,
-			appContainer: ref(null)
+			appContainer: ref(null),
+			mouseX: 0,
+			mouseY: 0
 		};
 	},
 	computed: {
@@ -110,7 +117,6 @@ export default {
 		getCurrentQuestion() {
 			let question = this.questions[this.currentQuestion];
 			question.index = this.currentQuestion;
-      console.log("question-->", question)
 			return question;
 		},
 		percentile() {
@@ -124,10 +130,17 @@ export default {
 			).length;
 			const betterThanPercentage =
 				(lessThanOrEqualUserScore / scores.length) * 100;
-			return betterThanPercentage;
+			return betterThanPercentage.toFixed(2);
 		},
 		isAnyOptionSelected() {
 			return this.getCurrentQuestion.selected != null;
+		},
+		parallaxStyle() {
+			return {
+				backgroundPosition: `calc(50% + ${this.mouseX * 50}px) calc(50% + ${
+					this.mouseY * 50
+				}px)`
+			};
 		}
 	},
 	methods: {
@@ -148,7 +161,23 @@ export default {
 			} else {
 				this.endOfQuiz = true;
 			}
+		},
+		handleMouseMove(event) {
+			this.mouseX = event.clientX / window.innerWidth - 0.5;
+			this.mouseY = event.clientY / window.innerHeight - 0.5;
 		}
+	},
+	mounted() {
+		this.$refs.appContainer?.addEventListener(
+			"mousemove",
+			this.handleMouseMove
+		);
+	},
+	beforeUnmount() {
+		this.$refs.appContainer?.removeEventListener(
+			"mousemove",
+			this.handleMouseMove
+		);
 	}
 };
 </script>
@@ -165,18 +194,19 @@ export default {
 	display: flex;
 	flex-direction: column;
 	align-items: center;
+	justify-content: center;
 	padding: 2rem;
 	height: 100vh;
 	position: relative;
 	overflow: hidden;
-	background-image: url("./assets/background-image.jpg");
+	background-image: url("../assets/background-image.jpg");
 	background-size: cover;
-	color: #fff;
+	color: #000000;
 }
 
 body {
-	background-color: #271c36;
-	color: #fff;
+	background-color: #fff;
+	color: #000000;
 }
 
 h1 {
@@ -185,10 +215,11 @@ h1 {
 }
 
 .quiz {
-	background-color: #382a4b;
+	background-color: #fff;
 	padding: 1rem;
 	width: 100%;
 	max-width: 640px;
+	border-radius: 5px;
 }
 
 .quiz-info {
@@ -198,75 +229,19 @@ h1 {
 }
 
 .quiz-info.score .quiz-info.question {
-	color: #fff;
+	color: #ffffff;
 	font-size: 1.25rem;
 }
 
-.options {
-	margin-bottom: 1rem;
-}
-
-.option {
-	padding: 1rem;
-	display: block;
-	background-color: #271c36;
-	margin-bottom: 0.5rem;
-	border-radius: 0.5rem;
-	cursor: pointer;
-
-	&:hover {
-		background-color: #2d213f;
-	}
-
-	&.correct {
-		background-color: #2cce7d;
-	}
-
-	&.wrong {
-		background-color: #ff5a5f;
-	}
-
-	&:last-of-type {
-		margin-bottom: 0;
-	}
-
-	&.disabled {
-		opacity: 0.5;
-	}
-
-	input {
-		display: none;
-	}
-}
-
-button {
-	appearance: none;
-	outline: none;
-	border: none;
-	cursor: pointer;
-	padding: 0.5rem 1rem;
-	background-color: #2cce7d;
-	color: #2d213f;
-	font-weight: 700;
-	text-transform: uppercase;
-	font-size: 1.2rem;
-	border-radius: 0.5rem;
-	float: right;
-
-	&:disabled {
-		opacity: 0.5;
-	}
-}
-
 h2 {
-	font-size: 2rem;
 	margin-bottom: 2rem;
 	text-align: center;
+	font-size: 1.3rem;
 }
 
 p {
-	color: #8f8f8f;
-	font-size: 1.5rem;
+	color: #000000;
+	font-size: 1.3rem;
 	text-align: center;
 	margin-bottom: 2rem;
 }
@@ -276,5 +251,16 @@ p {
 	flex-direction: column;
 	align-items: center;
 	justify-content: center;
+}
+
+.wrapper {
+	display: flex;
+	justify-content: space-between;
+	align-items: center;
+
+  @media screen and (max-width: 767px) {
+    flex-direction: column-reverse;
+  }
+
 }
 </style>
