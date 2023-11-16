@@ -1,5 +1,3 @@
-<!-- Score.vue -->
-
 <template>
   <div class="quiz-info score">
     <div class="score">Score {{ score }} / {{ totalQuestions }}</div>
@@ -23,12 +21,12 @@ export default {
 
 <style scoped>
 .quiz-info.score .quiz-info.question {
-  color: #fff;
+  color: #000000;
   font-size: 1.25rem;
 }
 
 .score {
-  color: #fff;
-  font-size: 1rem;
+  color: #000000;
+  font-size: 1.1rem;
 }
 </style>

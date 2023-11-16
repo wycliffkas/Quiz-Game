@@ -1,4 +1,3 @@
-
 <template>
   <div class="quiz-info">
     <div class="question">{{ question }}</div>
@@ -28,7 +27,7 @@ export default {
 }
 
 .question {
-  color: #fff;
+  color: #000000;
   font-size: 1.25rem;
 }
 </style>
